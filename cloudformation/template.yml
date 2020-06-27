@@ -1,0 +1,186 @@
+Parameters:
+  MyUserPoolName:
+    Type: String
+    Description: Name of the user pool
+  DomainPrefix:
+    Type: String
+    Description: Prefix for the domain under which hostet UI is available
+  BackendURL:
+    Type: String
+    Description: Base for backend URL
+  CallbackPath:
+    Type: String
+    Description: Callback path for backend
+  SignoutPath:
+      Type: String
+      Description: Sign out path for backend
+  AppClientName:
+    Type: String
+    Description: Application client name
+  UserPoolIdentityProviderName:
+    Type: String
+    Description: Custom provider name
+  Auth0ClientId:
+    Type: String
+    Description: Client ID of the Auth0 application
+  Auth0ClientSecret:
+    Type: String
+    Description: Client Secret of the Auth0 application
+    NoEcho: true
+  Auth0IssuerURL:
+    Type: String
+    Description: This URL allows Cognito to identify all endpoints in Auth0
+  IdentityPoolName:
+    Type: String
+    Description: Identity Pool name
+
+Resources:
+  UserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: !Ref MyUserPoolName
+      UsernameAttributes:
+        - email
+      Schema:
+        - AttributeDataType: String
+          Name: email
+          Required: true
+          Mutable: true
+        - Name: email_verified
+          Required: true
+          Mutable: true
+        - AttributeDataType: String
+          Name: family_name
+          Required: true
+          Mutable: true
+        - AttributeDataType: String
+          Name: given_name
+          Required: true
+          Mutable: true
+      UsernameConfiguration:
+        CaseSensitive: false
+
+  UserPoolDomain:
+    Type: AWS::Cognito::UserPoolDomain
+    Properties:
+      UserPoolId: !Ref UserPool
+      Domain: !Ref DomainPrefix
+
+  UserPoolIdentityProvider:
+    Type: AWS::Cognito::UserPoolIdentityProvider
+    Properties:
+      UserPoolId: !Ref UserPool
+      ProviderName: !Ref UserPoolIdentityProviderName
+      ProviderType: OIDC
+      ProviderDetails:
+        client_id: !Ref Auth0ClientId
+        client_secret: !Ref Auth0ClientSecret
+        attributes_request_method: GET
+        oidc_issuer: !Ref Auth0IssuerURL
+        authorize_scopes: openid profile email
+      AttributeMapping:
+        username: sub
+        email: email
+        email_verified: email_verified
+        family_name: family_name
+        given_name: given_name
+
+  UserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      UserPoolId: !Ref UserPool
+      AllowedOAuthFlows:
+        - code
+      AllowedOAuthScopes:
+        - openid
+        - email
+        - profile
+        - aws.cognito.signin.user.admin
+      AllowedOAuthFlowsUserPoolClient: true
+      CallbackURLs:
+        - !Sub ${BackendURL}${CallbackPath}
+      LogoutURLs:
+        - !Sub ${Auth0IssuerURL}/v2/logout?client_id=${Auth0ClientId}&returnTo=${BackendURL}${SignoutPath}
+      ClientName: !Ref AppClientName
+      GenerateSecret: false
+      SupportedIdentityProviders:
+        - !Ref UserPoolIdentityProvider
+      ReadAttributes:
+        - email
+        - email_verified
+        - family_name
+        - given_name
+      WriteAttributes:
+        - email
+        - family_name
+        - given_name
+
+  IdentityPool:
+    Type: AWS::Cognito::IdentityPool
+    Properties:
+      IdentityPoolName: !Ref IdentityPoolName
+      AllowUnauthenticatedIdentities: false
+      CognitoIdentityProviders:
+        - ClientId: !Ref UserPoolClient
+          ProviderName: !GetAtt UserPool.ProviderName
+
+  AuthenticatedUserRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: "role_for_an_authenticated_user"
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Federated: "cognito-identity.amazonaws.com"
+            Action:
+              - "sts:AssumeRoleWithWebIdentity"
+            Condition:
+              StringEquals:
+                  cognito-identity.amazonaws.com:aud: !Ref IdentityPool
+              ForAnyValue:StringLike:
+                cognito-identity.amazonaws.com:amr: "authenticated"
+      Description: This role allows necessary access to Cognito for an authenticated users
+      Policies:
+        - PolicyName: CognitoPermissions
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "mobileanalytics:PutEvents"
+                  - "cognito-sync:*"
+                  - "cognito-identity:*"
+                  - "polly:SynthesizeSpeech"
+                Resource:
+                  - "*"
+
+  IdentityPoolRoleAttachment:
+    Type: AWS::Cognito::IdentityPoolRoleAttachment
+    Properties:
+      IdentityPoolId: !Ref IdentityPool
+      Roles:
+        authenticated: !GetAtt AuthenticatedUserRole.Arn
+
+Outputs:
+  CognitoAwsRegion:
+    Value: !Sub ${AWS::Region}
+  CognitoUserPoolHost:
+    Value: !Sub https://${DomainPrefix}.auth.${AWS::Region}.amazoncognito.com
+  CognitoAppClientId:
+    Value: !Ref UserPoolClient
+  CallbackUrl:
+    Value: !Sub ${BackendURL}${CallbackPath}
+  CognitoSignoutCallbackUrl:
+    Value: !Sub ${Auth0IssuerURL}/v2/logout?client_id=${Auth0ClientId}&returnTo=${BackendURL}${SignoutPath}
+  CognitoUserPoolId:
+    Value: !Ref UserPool
+  CognitoIdentityPoolName:
+    Value: !Ref UserPoolIdentityProviderName
+  CognitoIdentityPoolId:
+    Value: !Ref IdentityPool
+  Auth0CallbackUrl:
+    Value: !Sub https://${DomainPrefix}.auth.${AWS::Region}.amazoncognito.com/oauth2/idpresponse
+  Auth0LogoutUrl:
+    Value: !Sub ${BackendURL}${SignoutPath}

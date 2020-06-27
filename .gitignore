@@ -1,0 +1,5 @@
+/sessions
+/node_modules
+.env
+.vscode
+/cloudformation/parameters.json

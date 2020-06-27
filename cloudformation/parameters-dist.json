@@ -1,0 +1,42 @@
+[
+    {
+        "ParameterKey": "MyUserPoolName",
+        "ParameterValue": ""
+    },
+    {
+        "ParameterKey": "DomainPrefix",
+        "ParameterValue": ""
+    },
+    {
+        "ParameterKey": "BackendURL",
+        "ParameterValue": "http://localhost:8080"
+    },
+    {
+        "ParameterKey": "CallbackPath",
+        "ParameterValue": "/auth/callback"
+    },
+    {
+        "ParameterKey": "SignoutPath",
+        "ParameterValue": "/auth/signout"
+    },
+    {
+        "ParameterKey": "AppClientName",
+        "ParameterValue": ""
+    },
+    {
+        "ParameterKey": "UserPoolIdentityProviderName",
+        "ParameterValue": ""
+    },
+    {
+        "ParameterKey": "Auth0ClientId",
+        "ParameterValue": ""
+    },
+    {
+        "ParameterKey": "Auth0IssuerURL",
+        "ParameterValue": ""
+    },
+    {
+        "ParameterKey": "IdentityPoolName",
+        "ParameterValue": ""
+    }
+]

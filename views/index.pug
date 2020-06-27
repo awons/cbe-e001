@@ -1,0 +1,97 @@
+extends layout.pug
+block content
+    h1 Test Cognito + Auth0 + LinkedIn integration
+    - if (tokenData == null)
+        h2 Unauthenticated
+        a(href='/login') Click here to login with LinkedIn
+    - else
+        h2 Authenticated
+        <h3>Hello <span id="given_name">???</span> <span id="family_name">???</span> using email <span id="email">???</span></h3>
+
+        <p><a href="#{COGNITO_SIGNOUT_URL}">Logout</a></p>
+
+        <div id="textToSynth">
+            <input autofocus size="23" type="text" id="textEntry" value="You successfully authenticated with LinkedIn using Auth0 and AWS Cognito"/>
+            <button class="btn default" onClick="speakText()">Synthesize</button>
+            <p id="result">Enter text above then click Synthesize</p>
+        </div>
+        <audio id="audioPlayback" controls>
+            <source id="audioSource" type="audio/mp3" src="">
+        </audio>
+
+        script.
+            window.onload = event => {
+                AWS.config.region = AWS_REGION
+
+                const cognitoIdentityServiceProvider = new AWS.CognitoIdentityServiceProvider();
+                cognitoIdentityServiceProvider.getUser({AccessToken: '#{tokenData.access_token}'}, (err, data) => {
+                    if(err) {
+                        console.log(err);
+                        return;
+                    }
+
+                    for (attribute of data.UserAttributes) {
+                        switch (attribute.Name) {
+                            case 'given_name':
+                                document.getElementById('given_name').textContent = attribute.Value;
+                                break;
+                            case 'family_name':
+                                document.getElementById('family_name').textContent = attribute.Value;
+                                break;
+                            case 'email':
+                                document.getElementById('email').textContent = attribute.Value;
+                                break;
+                        }
+                    }
+                });
+
+                const cognitoIdentity = new AWS.CognitoIdentity();
+                cognitoIdentity.getId({
+                    IdentityPoolId: COGNITO_IDENTITY_POOL_ID,
+                    Logins: {
+                        [`cognito-idp.${AWS_REGION}.amazonaws.com/${COGNITO_USER_POOL_ID}`]: '#{tokenData.id_token}'
+                    }
+                }, (error, data) => {
+                    if (error) {
+                        console.log(error);
+                        return;
+                    }
+                    
+                    AWS.config.credentials = new AWS.CognitoIdentityCredentials({
+                        IdentityPoolId: COGNITO_IDENTITY_POOL_ID,
+                        IdentityId: data.IdentityId,
+                        Logins: {
+                            [`cognito-idp.${AWS_REGION}.amazonaws.com/${COGNITO_USER_POOL_ID}`]: '#{tokenData.id_token}'
+                        }
+                    });
+                    AWS.config.credentials.refresh(error => {
+                        if (error) {
+                            console.log(error);
+                        }
+                    });
+                });
+            };
+
+            function speakText() {
+                const speechParams = {
+                    OutputFormat: 'mp3',
+                    SampleRate: '16000',
+                    Text: '',
+                    TextType: 'text',
+                    VoiceId: 'Matthew'
+                };
+                speechParams.Text = document.getElementById('textEntry').value;
+                
+                const polly = new AWS.Polly();
+                const signer = new AWS.Polly.Presigner(speechParams, polly);
+            
+                signer.getSynthesizeSpeechUrl(speechParams, (error, url) => {
+                    if (error) {
+                        document.getElementById('result').innerHTML = error;
+                    } else {
+                        document.getElementById('audioSource').src = url;
+                        document.getElementById('audioPlayback').load();
+                        document.getElementById('result').innerHTML = 'You successfully authenticate with LinkedIn using Auth0 and AWS Cognito';
+                    }
+                });
+            }
