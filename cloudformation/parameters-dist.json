@@ -32,6 +32,10 @@
         "ParameterValue": ""
     },
     {
+        "ParameterKey": "Auth0ClientSecret",
+        "ParameterValue": ""
+    },
+    {
         "ParameterKey": "Auth0IssuerURL",
         "ParameterValue": ""
     },

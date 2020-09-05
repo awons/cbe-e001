@@ -39,8 +39,6 @@ Resources:
     Type: AWS::Cognito::UserPool
     Properties:
       UserPoolName: !Ref MyUserPoolName
-      UsernameAttributes:
-        - email
       Schema:
         - AttributeDataType: String
           Name: email
@@ -177,7 +175,7 @@ Outputs:
   CognitoUserPoolId:
     Value: !Ref UserPool
   CognitoIdentityPoolName:
-    Value: !Ref UserPoolIdentityProviderName
+    Value: !Ref IdentityPoolName
   CognitoIdentityPoolId:
     Value: !Ref IdentityPool
   Auth0CallbackUrl:
