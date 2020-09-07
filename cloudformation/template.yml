@@ -139,7 +139,7 @@ Resources:
                   cognito-identity.amazonaws.com:aud: !Ref IdentityPool
               ForAnyValue:StringLike:
                 cognito-identity.amazonaws.com:amr: "authenticated"
-      Description: This role allows necessary access to Cognito for an authenticated users
+      Description: This role allows necessary access to AWS for an authenticated users
       Policies:
         - PolicyName: CognitoPermissions
           PolicyDocument:
