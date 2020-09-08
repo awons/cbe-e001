@@ -14,7 +14,7 @@ const app = express()
 app.set('view engine', 'pug')
 app.use(express.static('public'))
 app.use(session({
-  store: new FileStore(),
+  store: new FileStore({path: '/tmp/sessions'}),
   secret: 'not so secret secret',
   resave: false,
   saveUninitialized: true,
