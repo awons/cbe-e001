@@ -24,6 +24,7 @@ block content
                 AWS.config.region = AWS_REGION
 
                 const cognitoIdentityServiceProvider = new AWS.CognitoIdentityServiceProvider();
+                // This code only requires the access_token
                 cognitoIdentityServiceProvider.getUser({AccessToken: '#{tokenData.access_token}'}, (err, data) => {
                     if(err) {
                         console.log(err);
@@ -46,6 +47,7 @@ block content
                 });
 
                 const cognitoIdentity = new AWS.CognitoIdentity();
+                // This call requires the id_token
                 cognitoIdentity.getId({
                     IdentityPoolId: COGNITO_IDENTITY_POOL_ID,
                     Logins: {
