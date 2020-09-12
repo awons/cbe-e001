@@ -55,8 +55,6 @@ Resources:
           Name: given_name
           Required: true
           Mutable: true
-      UsernameConfiguration:
-        CaseSensitive: false
 
   UserPoolDomain:
     Type: AWS::Cognito::UserPoolDomain
