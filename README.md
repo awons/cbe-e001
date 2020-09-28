@@ -1,8 +1,8 @@
 # Setting up LinkedIn as an identity provider for Cognito User Pool with help of Auth0
 
 This application is part a tutorial you can find here:
-* YouTube - https://....
-* Blog - https://cloudbyexampl.io/....
+* YouTube - https://youtu.be/xnmi0oc19e4
+* Blog - https://www.cloudbyexample.io/setting-up-linkedin-as-a-social-identity-provider-part1
 
 ## Using dev container in vscode
 This repository contains a `.devcontainer` configuation for VSCode. Just repopen this repo in that container and you are ready to go. It maps to port 8080 on the host.
